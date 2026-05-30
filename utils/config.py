@@ -1,3 +1,5 @@
+import os
+
 import pytz
 from aiogram.client.default import DefaultBotProperties
 from dotenv import dotenv_values
@@ -7,7 +9,7 @@ databasePath = "utils/base.db"
 
 defaultTimezone = pytz.timezone("Europe/Moscow")
 
-env = dotenv_values()
+env = {**dotenv_values(), **os.environ}
 
 adminsIds = env["ADMINS_IDS"].split(",")
 
