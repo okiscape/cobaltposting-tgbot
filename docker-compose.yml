@@ -2,6 +2,7 @@ services:
   bot:
     build: .
    # image: ghcr.io/okiscape/cobaltposting-tgbot:latest
+    container_name: cobaltposting-tgbot
     restart: unless-stopped
     environment:
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
