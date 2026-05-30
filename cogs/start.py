@@ -31,8 +31,9 @@ Or /setup to setup bot in your channel.""")
 <b>This bot uses:</b>
  - https://github.com/imputnet/cobalt
  - https://github.com/aiogram/aiogram
+and maybe something else
 
-<i>created by <a href="https://github.com/okiscape">okiscape</a> (@nvr_bio)</i>"""
+[Source](https://github.com/okiscape/cobaltposting-tgbot)<i> created by <a href="https://github.com/okiscape">okiscape</a> (@nvr_bio)</i>"""
         )
 
 

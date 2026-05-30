@@ -32,7 +32,7 @@ class Bot(aiBot):
         self.cobalt._owned = False
 
         super().__init__(
-            token=config.tokens.token,
+            token=config.botToken,
             default=config.defaults,
             #  session=AiohttpSession(proxy="socks5://127.0.0.1:3067")
         )

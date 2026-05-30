@@ -7,8 +7,7 @@ from __future__ import annotations
 
 import asyncio
 import io
-import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from typing import Optional
 from urllib.parse import urlparse
@@ -504,6 +503,9 @@ class CobaltMethods:
 
         # { service_name: base_url } — последняя успешная нода для сервиса
         self._preferred_node: dict[str, str] = {}
+        self.logging.info(
+            "CobaltMethods initialized with nodes", self.base_urls, type="cobalt"
+        )
 
     # ── context manager ──────────────────────
 

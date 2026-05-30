@@ -7,14 +7,24 @@ databasePath = "utils/base.db"
 
 defaultTimezone = pytz.timezone("Europe/Moscow")
 
-env = dotenv_values()
-
-adminsIds = env["ADMINS_IDS"].split(",")
-
 logIgnoreTypes = ["preload"]
 
-nodes = env["COBALT_NODES"].split(",")
+env = dotenv_values()
 
+adminsIds = env.get("ADMINS_IDS", "").split(",")
+nodes = env.get("COBALT_NODES", "").split(",")
+botToken = env.get("TELEGRAM_BOT_TOKEN", "")
+errorsReportChatId = env.get("ERRORS_REPORT_CHATID", "")
 
-class tokens:
-    token = env["TELEGRAM_BOT_TOKEN"]
+if None in (adminsIds, nodes, botToken, errorsReportChatId):
+    raise ValueError(
+        "Missing required environment variables("
+        + ", ".join(
+            [
+                var.__repr__()
+                for var in (adminsIds, nodes, botToken, errorsReportChatId)
+                if var is None
+            ]
+        )
+        + ")"
+    )
