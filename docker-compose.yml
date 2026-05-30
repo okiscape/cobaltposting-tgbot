@@ -4,8 +4,6 @@ services:
    # image: ghcr.io/okiscape/cobaltposting-tgbot:latest
     container_name: cobaltposting-tgbot
     restart: unless-stopped
-    environment:
-      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
-      COBALT_NODES: ${COBALT_NODES}
-      ERRORS_REPORT_CHATID: ${ERRORS_REPORT_CHATID}
-      ADMINS_IDS: ${ADMINS_IDS}
+    env_file: .env
+    volumes:
+      - ./utils:/app/utils
