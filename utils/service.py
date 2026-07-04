@@ -49,6 +49,7 @@ class Bot(aiBot):
                 "channelId": "INTEGER NOT NULL",
                 "createdAt": "INTEGER NOT NULL",
                 "customNodes": "TEXT",
+                "replaceNodes": "INTEGER DEFAULT 0",
             },
         )
         return self.db

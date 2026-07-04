@@ -1,8 +1,3 @@
-"""
-cobalt.py — Async клиент для cobalt API (v10+)
-https://github.com/imputnet/cobalt/blob/main/docs/api.md
-"""
-
 from __future__ import annotations
 
 import asyncio
@@ -13,10 +8,6 @@ from typing import Optional
 from urllib.parse import urlparse
 
 import aiohttp
-
-# ──────────────────────────────────────────────
-# Enums
-# ──────────────────────────────────────────────
 
 
 class AudioBitrate(str, Enum):
@@ -95,18 +86,10 @@ class PickerItemType(str, Enum):
     GIF = "gif"
 
 
-# ──────────────────────────────────────────────
-# Request / Response types
-# ──────────────────────────────────────────────
-
-
 @dataclass
 class CobaltRequest:
-    """Тело запроса к POST /"""
-
     url: str
 
-    # General
     audioBitrate: AudioBitrate = AudioBitrate.B128
     audioFormat: AudioFormat = AudioFormat.MP3
     downloadMode: DownloadMode = DownloadMode.AUTO
@@ -117,14 +100,12 @@ class CobaltRequest:
     localProcessing: LocalProcessing = LocalProcessing.DISABLED
     subtitleLang: Optional[str] = None
 
-    # YouTube
     youtubeVideoCodec: YoutubeVideoCodec = YoutubeVideoCodec.H264
     youtubeVideoContainer: YoutubeVideoContainer = YoutubeVideoContainer.AUTO
     youtubeDubLang: Optional[str] = None
     youtubeBetterAudio: bool = False
     youtubeHLS: bool = False
 
-    # Service-specific
     convertGif: bool = True
     allowH265: bool = False
     tiktokFullAudio: bool = False
@@ -323,21 +304,13 @@ class SessionResponse:
     exp: int
 
 
-# Тип-объединение для результата запроса
 CobaltResponse = (
     TunnelResponse | LocalProcessingResponse | PickerResponse | ErrorResponse
 )
 
 
-# ──────────────────────────────────────────────
-# IO-обёртка для скачанного файла
-# ──────────────────────────────────────────────
-
-
 @dataclass
 class DownloadedFile:
-    """Скачанный файл, хранящийся в памяти."""
-
     filename: str
     content_type: str
     data: io.BytesIO
@@ -356,11 +329,6 @@ class DownloadedFile:
         size = self.content_length or self.estimated_length
         size_str = f"{size} bytes" if size else "unknown size"
         return f"<DownloadedFile filename={self.filename!r} size={size_str}>"
-
-
-# ──────────────────────────────────────────────
-# Exceptions
-# ──────────────────────────────────────────────
 
 
 class CobaltApiError(Exception):
@@ -384,11 +352,6 @@ class CobaltAllNodesFailed(Exception):
         super().__init__(f"All nodes failed: {summary}")
 
 
-# ──────────────────────────────────────────────
-# Утилиты
-# ──────────────────────────────────────────────
-
-# Маппинг хостов на имя сервиса (совпадает с тем что возвращает cobalt)
 _HOST_TO_SERVICE: dict[str, str] = {
     "youtube.com": "youtube",
     "www.youtube.com": "youtube",
@@ -445,7 +408,6 @@ _HOST_TO_SERVICE: dict[str, str] = {
     "www.streamable.com": "streamable",
 }
 
-# Коды ошибок cobalt, при которых смена ноды может помочь
 _RETRYABLE_ERROR_CODES = {
     "error.api.fetch.fail",
     "error.api.unreachable",
@@ -468,21 +430,16 @@ def _service_from_url(url: str) -> Optional[str]:
     return None
 
 
-# ──────────────────────────────────────────────
-# Главный класс
-# ──────────────────────────────────────────────
-
-
 class CobaltMethods:
     """
     Async-клиент для cobalt API с поддержкой нескольких нод и памятью
     о последней успешной ноде для каждого сервиса.
 
     Логика выбора ноды:
-        1. Если для сервиса есть запомненная нода — пробуем её первой.
-        2. Если она не сработала — перебираем остальные по порядку.
+        1. Если для сервиса есть запомненная нода - пробуем её первой.
+        2. Если она не сработала - перебираем остальные по порядку.
         3. При успехе запоминаем ноду как предпочтительную для этого сервиса.
-        4. Если все ноды вернули ошибку — бросаем CobaltAllNodesFailed.
+        4. Если все ноды вернули ошибку - бросаем CobaltAllNodesFailed.
     """
 
     def __init__(
@@ -501,13 +458,10 @@ class CobaltMethods:
         self._session = session
         self._owned = session is None
 
-        # { service_name: base_url } — последняя успешная нода для сервиса
         self._preferred_node: dict[str, str] = {}
         self.logging.info(
             "CobaltMethods initialized with nodes", self.base_urls, type="cobalt"
         )
-
-    # ── context manager ──────────────────────
 
     async def __aenter__(self) -> "CobaltMethods":
         if self._owned:
@@ -519,14 +473,25 @@ class CobaltMethods:
             await self._session.close()
             self._session = None
 
-    # ── helpers ──────────────────────────────
+    def _node_order(
+        self,
+        service: Optional[str],
+        custom_nodes: Optional[list[str]] = None,
+        replace_nodes: bool = False,
+    ) -> list[str]:
+        if custom_nodes:
+            custom_nodes = [url.rstrip("/") for url in custom_nodes]
+            if replace_nodes:
+                base = custom_nodes
+            else:
+                base = list(self.base_urls) + custom_nodes
+        else:
+            base = list(self.base_urls)
 
-    def _node_order(self, service: Optional[str]) -> list[str]:
-        """Список нод: предпочтительная для сервиса — первой."""
         preferred = self._preferred_node.get(service) if service else None
-        if preferred and preferred in self.base_urls:
-            return [preferred] + [u for u in self.base_urls if u != preferred]
-        return list(self.base_urls)
+        if preferred and preferred in base:
+            return [preferred] + [u for u in base if u != preferred]
+        return base
 
     def _remember_node(self, service: Optional[str], base_url: str) -> None:
         if service:
@@ -592,8 +557,6 @@ class CobaltMethods:
 
         raise ValueError(f"Unknown cobalt response status: {status}")
 
-    # ── node-aware request ────────────────────
-
     async def _request_on_node(
         self, base_url: str, req: CobaltRequest
     ) -> CobaltResponse:
@@ -611,17 +574,17 @@ class CobaltMethods:
             print(json)
             return self._parse_response(json)
 
-    async def request(self, req: CobaltRequest) -> CobaltResponse:
-        """
-        POST / с автоматическим перебором нод.
-
-        Пробует предпочтительную ноду для сервиса первой, затем остальные.
-        При успехе запоминает ноду. Если все ноды упали — CobaltAllNodesFailed.
-        """
+    async def request(
+        self,
+        req: CobaltRequest,
+        *,
+        custom_nodes: Optional[list[str]] = None,
+        replace_nodes: bool = False,
+    ) -> CobaltResponse:
         assert self._session, "No session"
 
         service = _service_from_url(req.url)
-        nodes = self._node_order(service)
+        nodes = self._node_order(service, custom_nodes, replace_nodes)
         errors: dict[str, Exception] = {}
 
         for base_url in nodes:
@@ -631,9 +594,6 @@ class CobaltMethods:
                 )
                 resp = await self._request_on_node(base_url, req)
 
-                # Если нода ответила ошибкой fetch/network — пробуем следующую.
-                # Любая другая ошибка (неверный URL, лимит и т.д.) — возвращаем сразу,
-                # смена ноды не поможет.
                 if isinstance(resp, ErrorResponse):
                     if resp.error.code in _RETRYABLE_ERROR_CODES:
                         self.logging.info(
@@ -644,7 +604,7 @@ class CobaltMethods:
                         continue
                     return resp
 
-                # Успех — запоминаем ноду для этого сервиса
+                # Успех - запоминаем ноду для этого сервиса
                 self._remember_node(service, base_url)
                 return resp
 
@@ -664,8 +624,6 @@ class CobaltMethods:
                 continue
 
         raise CobaltAllNodesFailed(errors)
-
-    # ── tunnel fetch ─────────────────────────
 
     async def fetch_tunnel(
         self, url: str, filename: str, retries: int = 3
@@ -703,20 +661,21 @@ class CobaltMethods:
                 await asyncio.sleep(1.5 * (attempt + 1))
         raise last_exc
 
-    # ── public download API ───────────────────
-
     async def download(
         self,
         url: str,
         *,
         request_overrides: Optional[CobaltRequest] = None,
         raise_on_picker: bool = False,
+        custom_nodes: Optional[list[str]] = None,
+        replace_nodes: bool = False,
     ) -> DownloadedFile:
-        """Полный цикл: перебор нод → запрос → скачивание туннеля → DownloadedFile."""
         req = request_overrides or CobaltRequest(url=url)
         req.url = url
 
-        resp = await self.request(req)
+        resp = await self.request(
+            req, custom_nodes=custom_nodes, replace_nodes=replace_nodes
+        )
 
         if isinstance(resp, ErrorResponse):
             raise CobaltApiError(resp.error)
@@ -745,12 +704,15 @@ class CobaltMethods:
         url: str,
         *,
         request_overrides: Optional[CobaltRequest] = None,
+        custom_nodes: Optional[list[str]] = None,
+        replace_nodes: bool = False,
     ) -> list[DownloadedFile]:
-        """Скачивает все элементы из picker-ответа (галерея, слайдшоу)."""
         req = request_overrides or CobaltRequest(url=url)
         req.url = url
 
-        resp = await self.request(req)
+        resp = await self.request(
+            req, custom_nodes=custom_nodes, replace_nodes=replace_nodes
+        )
 
         if isinstance(resp, ErrorResponse):
             print(resp)
@@ -763,4 +725,11 @@ class CobaltMethods:
                 files.append(await self.fetch_tunnel(item.url, filename))
             return files
 
-        return [await self.download(url, request_overrides=request_overrides)]
+        return [
+            await self.download(
+                url,
+                request_overrides=request_overrides,
+                custom_nodes=custom_nodes,
+                replace_nodes=replace_nodes,
+            )
+        ]

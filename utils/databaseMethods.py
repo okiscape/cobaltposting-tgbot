@@ -507,7 +507,14 @@ class DatabaseMethods(DatabaseMethodsBase):
 
         usersFetch = await self.read(
             "users",
-            ["userId", "channelId", "stats", "createdAt", "customNodes"],
+            [
+                "userId",
+                "channelId",
+                "stats",
+                "createdAt",
+                "customNodes",
+                "replaceNodes",
+            ],
             filters=filters,
         )
         usersFetch = usersFetch.fetchall
@@ -515,13 +522,26 @@ class DatabaseMethods(DatabaseMethodsBase):
         toReturn: list[User] = []
 
         for item in usersFetch:
+            raw_nodes = item[4]
+            if raw_nodes and isinstance(raw_nodes, str):
+                try:
+                    parsed = json.loads(raw_nodes)
+                    custom_nodes = parsed if isinstance(parsed, list) else []
+                except (json.JSONDecodeError, TypeError):
+                    custom_nodes = []
+            elif isinstance(raw_nodes, list):
+                custom_nodes = raw_nodes
+            else:
+                custom_nodes = []
+
             toReturn.append(
                 User(
                     userId=item[0],
                     channelId=item[1],
                     stats=item[2],
                     createdAt=item[3],
-                    customNodes=item[4],
+                    customNodes=custom_nodes,
+                    replaceNodes=bool(item[5]) if len(item) > 5 else False,
                 )
             )
 

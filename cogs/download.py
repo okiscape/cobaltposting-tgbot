@@ -84,7 +84,17 @@ class Handler(cog.Cog):
 
         try:
             self.bot.log(f"Starting download for URL: {message.text}", type="debug")
-            downloaded = await self.bot.cobalt.download_all_picker(url=message.text)
+            custom_nodes = (
+                [n.strip() for n in user.customNodes if n.strip()]
+                if user.customNodes
+                else None
+            )
+            replace_nodes = user.replaceNodes or False
+            downloaded = await self.bot.cobalt.download_all_picker(
+                url=message.text,
+                custom_nodes=custom_nodes,
+                replace_nodes=replace_nodes,
+            )
             self.bot.log(
                 f"Downloaded {len(downloaded)} file(s): "
                 + ", ".join(f.filename for f in downloaded),
@@ -212,6 +222,10 @@ class Handler(cog.Cog):
 
         except Exception as e:
             if isinstance(e, cog.cobaltAPI.CobaltAllNodesFailed):
+                if user.replaceNodes:
+                    return await rmsg.edit_text(
+                        "Currently nodes you've setted up can't download from this service.\nPlease, check is there all ok with them."
+                    )
                 await rmsg.edit_text(
                     "Currently i can't download this content from this service, try again later."
                 )

@@ -1,14 +1,14 @@
 """
-caption_formatter.py — парсинг метаданных из URL и форматирование подписей.
+caption_formatter.py - парсинг метаданных из URL и форматирование подписей.
 
 Доступные плейсхолдеры:
-    {url}               — оригинальная ссылка
-    {service}           — название сервиса с заглавной буквы (YouTube, TikTok, ...)
-    {service_lower}     — название сервиса в нижнем регистре (youtube, tiktok, ...)
-    {publisher}         — юзернейм/никнейм автора (@username или username)
-    {publisher_name}    — без @ (просто username)
-    {video_id}          — ID видео/поста (если извлекаемо)
-    {post_url}          — канонический URL поста (без query-параметров)
+    {url}               - оригинальная ссылка
+    {service}           - название сервиса с заглавной буквы (YouTube, TikTok, ...)
+    {service_lower}     - название сервиса в нижнем регистре (youtube, tiktok, ...)
+    {publisher}         - юзернейм/никнейм автора (@username или username)
+    {publisher_name}    - без @ (просто username)
+    {video_id}          - ID видео/поста (если извлекаемо)
+    {post_url}          - канонический URL поста (без query-параметров)
 """
 
 from __future__ import annotations
@@ -108,7 +108,7 @@ def _parse_youtube(url: str, parsed) -> UrlMeta:
 def _parse_tiktok(url: str, parsed) -> UrlMeta:
     # Форматы:
     #   tiktok.com/@user/video/ID
-    #   vm.tiktok.com/SHORTCODE  (короткая — publisher недоступен)
+    #   vm.tiktok.com/SHORTCODE  (короткая - publisher недоступен)
     #   vt.tiktok.com/SHORTCODE
     path = parsed.path.rstrip("/")
     publisher = None
@@ -314,7 +314,7 @@ def parse_url(url: str) -> UrlMeta:
         if host.endswith(".tumblr.com"):
             return _parse_tumblr(url, parsed)
 
-        # Неизвестный сервис — вернуть хоть что-то
+        # Неизвестный сервис - вернуть хоть что-то
         print("unknown service " + host)
         service = host.removeprefix("www.").split(".")[0].capitalize()
         return _make(url, service, None, None, url)

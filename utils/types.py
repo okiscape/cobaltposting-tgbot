@@ -101,9 +101,11 @@ class User:
         stats: dict[str, str] | None = None,
         channelId: int | None = None,
         customNodes: list[str] = [],
+        replaceNodes: bool = False,
     ):
         self.userId = userId
         self.channelId = channelId
         self.stats = stats
         self.createdAt = createdAt
         self.customNodes = customNodes
+        self.replaceNodes = replaceNodes

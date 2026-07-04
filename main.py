@@ -10,6 +10,7 @@ bot.load_handlers(
         "cogs.middlewares",
         "cogs.start",
         "cogs.setup",
+        "cogs.settings",
         "cogs.download",
     ]
 )
