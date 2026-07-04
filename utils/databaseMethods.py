@@ -507,7 +507,7 @@ class DatabaseMethods(DatabaseMethodsBase):
 
         usersFetch = await self.read(
             "users",
-            ["userId", "channelId", "stats", "createdAt", "format"],
+            ["userId", "channelId", "stats", "createdAt", "customNodes"],
             filters=filters,
         )
         usersFetch = usersFetch.fetchall
@@ -521,7 +521,7 @@ class DatabaseMethods(DatabaseMethodsBase):
                     channelId=item[1],
                     stats=item[2],
                     createdAt=item[3],
-                    format=item[4],
+                    customNodes=item[4],
                 )
             )
 

@@ -98,11 +98,12 @@ class User:
         self,
         userId: int,
         createdAt: int,
-        stats: str | None = None,
+        stats: dict[str, str] | None = None,
         channelId: int | None = None,
         customNodes: list[str] = [],
     ):
-        self.userId: int = userId
-        self.channelId: int | None = channelId
-        self.createdAt: int = createdAt
+        self.userId = userId
+        self.channelId = channelId
+        self.stats = stats
+        self.createdAt = createdAt
         self.customNodes = customNodes

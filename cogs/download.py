@@ -33,7 +33,6 @@ class Handler(cog.Cog):
             )
         user = users[0]
 
-        # Проверяем что бот до сих пор админ
         try:
             bot_member = await self.bot.get_chat_member(user.channelId, self.bot.id)
             if bot_member.status != "administrator":
@@ -47,7 +46,6 @@ class Handler(cog.Cog):
                 "I might have been removed. Use /setup to link a new channel."
             )
 
-        # Проверяем что юзер до сих пор админ
         try:
             user_member = await self.bot.get_chat_member(
                 user.channelId, message.from_user.id
@@ -85,21 +83,21 @@ class Handler(cog.Cog):
         rmsg = await message.answer("Downloading...")
 
         try:
+            self.bot.log(f"Starting download for URL: {message.text}", type="debug")
             downloaded = await self.bot.cobalt.download_all_picker(url=message.text)
+            self.bot.log(
+                f"Downloaded {len(downloaded)} file(s): "
+                + ", ".join(f.filename for f in downloaded),
+                type="debug",
+            )
 
             meta = cog.parser.parse_url(message.text)
             if meta.publisher:
                 caption = meta.format(
-                    user.format
-                    if user.format
-                    else '<a href="{post_url}">&gt; {service_lower}/{publisher}</a>'
+                    '<a href="{post_url}">&gt; {service_lower}/{publisher}</a>'
                 )
             else:
-                caption = meta.format(
-                    user.format
-                    if user.format
-                    else '<a href="{post_url}">&gt; {service_lower}</a>'
-                )
+                caption = meta.format('<a href="{post_url}">&gt; {service_lower}</a>')
 
             sentmsg = None
             media_group: list = []
@@ -109,6 +107,9 @@ class Handler(cog.Cog):
                 nonlocal sentmsg, first_sent
                 if not media_group:
                     return
+                self.bot.log(
+                    f"Flushing media group of {len(media_group)} item(s)", type="debug"
+                )
                 if first_sent:
                     first_item = media_group[0]
                     if isinstance(first_item, cog.aiotypes.InputMediaPhoto):
@@ -132,6 +133,9 @@ class Handler(cog.Cog):
 
             async def _send_single(f, kind: str):
                 nonlocal sentmsg, first_sent
+                self.bot.log(
+                    f"Sending single file: {f.filename} as {kind}", type="debug"
+                )
                 cap = caption if first_sent else None
                 pm = "HTML" if first_sent else None
                 first_sent = False
@@ -141,6 +145,15 @@ class Handler(cog.Cog):
                         await self.bot.send_animation(
                             chat_id=user.channelId,
                             animation=buf,
+                            caption=cap,
+                            parse_mode=pm,
+                        )
+                    ]
+                elif kind == "video":
+                    sentmsg = [
+                        await self.bot.send_video(
+                            chat_id=user.channelId,
+                            video=buf,
                             caption=cap,
                             parse_mode=pm,
                         )
@@ -157,26 +170,28 @@ class Handler(cog.Cog):
 
             for f in downloaded:
                 kind = _media_kind(f.content_type)
+                self.bot.log(
+                    f"Processing file: {f.filename} | content_type={f.content_type} | kind={kind}",
+                    type="debug",
+                )
                 buf = cog.aiotypes.BufferedInputFile(f.read(), filename=f.filename)
 
                 if kind in ("photo", "video"):
-                    # Добавляем в группу
                     if kind == "photo":
                         media_group.append(cog.aiotypes.InputMediaPhoto(media=buf))
                     else:
                         media_group.append(cog.aiotypes.InputMediaVideo(media=buf))
 
-                    # Флашим если достигли лимита
                     if len(media_group) == 10:
                         await _flush_group()
 
                 else:
-                    # gif или document — сначала флашим накопленную группу
                     await _flush_group()
                     await _send_single(f, kind)
 
-            # Флашим остаток группы
             await _flush_group()
+
+            self.bot.log("All files sent successfully", type="debug")
 
             channel = await self.bot.get_chat(user.channelId)
             await rmsg.edit_text(
@@ -209,8 +224,6 @@ class Handler(cog.Cog):
 
         finally:
             self._downloading.discard(user_id)
-
-        user.stats
 
 
 def setup(bot: cog.Bot):
