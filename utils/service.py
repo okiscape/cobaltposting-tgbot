@@ -49,7 +49,6 @@ class Bot(aiBot):
                 "channelId": "INTEGER NOT NULL",
                 "stats": "TEXT",
                 "createdAt": "INTEGER NOT NULL",
-                "format": "TEXT",
             },
         )
         return self.db

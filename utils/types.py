@@ -98,14 +98,9 @@ class User:
         self,
         userId: int,
         createdAt: int,
-        format: str = None,
-        stats: str = None,
-        channelId: int = None,
+        stats: str | None = None,
+        channelId: int | None = None,
     ):
         self.userId: int = userId
-        self.channelId: int = channelId
-        self.stats: dict[str, str] = (
-            stats  # стата по источникам, откуда больше всего скачано файлов
-        )
+        self.channelId: int | None = channelId
         self.createdAt: int = createdAt
-        self.format: str = format
