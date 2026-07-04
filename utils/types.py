@@ -100,7 +100,9 @@ class User:
         createdAt: int,
         stats: str | None = None,
         channelId: int | None = None,
+        customNodes: list[str] = [],
     ):
         self.userId: int = userId
         self.channelId: int | None = channelId
         self.createdAt: int = createdAt
+        self.customNodes = customNodes

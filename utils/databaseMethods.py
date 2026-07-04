@@ -153,6 +153,7 @@ class DatabaseMethodsBase:
         table: str,
         columns: dict[str, str],
         ifNotExists: bool = True,
+        alter: bool = True,
     ):
         self.bot.log(
             f"Start dbm.createTable for {table}",
@@ -161,11 +162,25 @@ class DatabaseMethodsBase:
         )
         exists = "IF NOT EXISTS" if ifNotExists else ""
         cols = [f'"{name}" {definition}' for name, definition in columns.items()]
-        query = f"""
+
+        await self.execute(f"""
     CREATE TABLE {exists} {table}
         ({", ".join(cols)})
-        """
-        await self.execute(query)
+        """)
+
+        if alter:
+            existing_cols = set()
+            try:
+                cols_info = (await self.execute(f"PRAGMA table_info({table})")).fetchall
+                existing_cols = {row[1] for row in cols_info}
+            except Exception:
+                pass
+
+            for name, definition in columns.items():
+                if name not in existing_cols:
+                    await self.execute(
+                        f'ALTER TABLE {table} ADD COLUMN "{name}" {definition}'
+                    )
 
     def generateWhereClauses(self, filters: list[Filter] | list[FiltersGroup]):
         where_clauses: list[str] = []

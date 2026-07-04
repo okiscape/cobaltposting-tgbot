@@ -47,8 +47,8 @@ class Bot(aiBot):
             {
                 "userId": "INTEGER NOT NULL PRIMARY KEY",
                 "channelId": "INTEGER NOT NULL",
-                "stats": "TEXT",
                 "createdAt": "INTEGER NOT NULL",
+                "customNodes": "TEXT",
             },
         )
         return self.db
